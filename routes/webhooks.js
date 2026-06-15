@@ -59,16 +59,21 @@ async function indexarArchivo(rutaArchivo, repoId) {
 
   const embedding = await generarEmbedding(contenido)
 
-  const { error } = await supabase.from('nodos').upsert({
+  const nodo = {
     tipo,
     titulo: rutaArchivo.split('/').pop().replace('.md', ''),
     contenido,
     hu_id,
     embedding
-  }, {
-    onConflict: 'hu_id,tipo',
-    ignoreDuplicates: false
-  })
+  }
+
+  // Si tiene hu_id → upsert, si no → insert normal
+  const { error } = hu_id
+    ? await supabase.from('nodos').upsert(nodo, {
+        onConflict: 'hu_id,tipo',
+        ignoreDuplicates: false
+      })
+    : await supabase.from('nodos').insert(nodo)
 
   if (error) throw new Error(error.message)
   console.log(`✅ Indexado: ${rutaArchivo} → ${tipo}`)

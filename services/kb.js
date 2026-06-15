@@ -11,25 +11,45 @@ async function guardarNodo({
 }) {
   const embedding = await generarEmbedding(`${titulo}\n\n${contenido}`)
 
-  const { data, error } = await supabase
-    .from('nodos')
-    .upsert({
-      proyecto_id,
-      usuario_id,
-      tipo,
-      titulo,
-      contenido,
-      hu_id,
-      embedding
-    }, {
-      onConflict: 'hu_id,tipo',
-      ignoreDuplicates: false
-    })
-    .select()
-    .single()
+  // Si tiene hu_id → upsert, si no → insert normal
+  if (hu_id) {
+    const { data, error } = await supabase
+      .from('nodos')
+      .upsert({
+        proyecto_id,
+        usuario_id,
+        tipo,
+        titulo,
+        contenido,
+        hu_id,
+        embedding
+      }, {
+        onConflict: 'hu_id,tipo',
+        ignoreDuplicates: false
+      })
+      .select()
+      .single()
 
-  if (error) throw new Error(`Error guardando nodo: ${error.message}`)
-  return data
+    if (error) throw new Error(`Error guardando nodo: ${error.message}`)
+    return data
+  } else {
+    const { data, error } = await supabase
+      .from('nodos')
+      .insert({
+        proyecto_id,
+        usuario_id,
+        tipo,
+        titulo,
+        contenido,
+        hu_id,
+        embedding
+      })
+      .select()
+      .single()
+
+    if (error) throw new Error(`Error guardando nodo: ${error.message}`)
+    return data
+  }
 }
 
 async function buscarNodos({
