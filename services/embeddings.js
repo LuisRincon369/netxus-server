@@ -15,7 +15,12 @@ const MODELO = 'voyage-code-3'
 
 // Embedding de un documento (para indexar en la base de conocimiento)
 async function generarEmbedding(texto) {
-  const textoLimpio = texto
+  // Asegurar que sea string (obtenerContenido puede devolver un objeto)
+  const textoString = typeof texto === 'string'
+    ? texto
+    : JSON.stringify(texto)
+
+  const textoLimpio = textoString
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 8000)

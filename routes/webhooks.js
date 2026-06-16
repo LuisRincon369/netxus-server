@@ -132,13 +132,20 @@ async function obtenerContenido(repoId, path) {
     const project = process.env.AZURE_DEVOPS_PROJECT
     const pat = Buffer.from(`:${process.env.AZURE_DEVOPS_PAT}`).toString('base64')
 
-    const url = `https://dev.azure.com/${org}/${project}/_apis/git/repositories/${repoId}/items?path=${path}&api-version=7.0`
+    const url = `https://dev.azure.com/${org}/${project}/_apis/git/repositories/${repoId}/items?path=/${path}&api-version=7.0`
 
     const { data } = await axios.get(url, {
-      headers: { Authorization: `Basic ${pat}` }
+      headers: {
+        Authorization: `Basic ${pat}`,
+        Accept: 'text/plain'  // ← forzar texto plano
+      },
+      responseType: 'text'   // ← forzar respuesta como texto
     })
-    return data
-  } catch {
+
+    console.log('Contenido obtenido tipo:', typeof data)
+    return typeof data === 'string' ? data : JSON.stringify(data)
+  } catch (error) {
+    console.error('Error obteniendo contenido:', error.message)
     return null
   }
 }
