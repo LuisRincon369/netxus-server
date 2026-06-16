@@ -20,11 +20,20 @@ function validarSecret(req, res, next) {
 router.post('/azure', validarSecret, async (req, res) => {
   const { eventType, resource } = req.body
 
+  console.log('EventType:', eventType)
+  console.log('Resource repo:', resource?.repository?.name)
+  console.log('Commits:', resource?.commits?.length)
+
   try {
     if (eventType === 'git.push') {
       const repoNombre = resource.repository?.name
+      console.log('Repo detectado:', repoNombre)
+
       if (repoNombre === 'sdd-agentes') {
+        console.log('Procesando push a sdd-agentes...')
         await manejarPushSDD(resource)
+      } else {
+        console.log('Repo ignorado:', repoNombre)
       }
     }
     res.json({ ok: true })
