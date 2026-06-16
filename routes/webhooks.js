@@ -6,8 +6,12 @@ require('dotenv').config()
 
 // Validar secret
 function validarSecret(req, res, next) {
+  console.log('Webhook recibido:', req.headers)
+  console.log('Body:', JSON.stringify(req.body).slice(0, 200))
+
   const secret = req.headers['x-netxus-secret']
   if (secret !== process.env.AZURE_WEBHOOK_SECRET) {
+    console.log('Secret inválido:', secret)
     return res.status(401).json({ error: 'Webhook no autorizado' })
   }
   next()
