@@ -45,14 +45,17 @@ router.post('/azure', validarSecret, async (req, res) => {
 
 async function manejarPushSDD(resource) {
   const commits = resource.commits || []
+  console.log('Commits a procesar:', commits.length)
 
   for (const commit of commits) {
     const archivos = [
       ...(commit.added || []),
       ...(commit.modified || [])
     ]
+    console.log('Archivos en commit:', archivos)
 
     for (const archivo of archivos) {
+      console.log('Procesando archivo:', archivo)
       await indexarArchivo(archivo, resource.repository.id)
     }
   }
