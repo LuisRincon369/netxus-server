@@ -47,16 +47,36 @@ async function manejarPushSDD(resource) {
   const commits = resource.commits || []
   console.log('Commits a procesar:', commits.length)
 
-  for (const commit of commits) {
-    const archivos = [
-      ...(commit.added || []),
-      ...(commit.modified || [])
-    ]
-    console.log('Archivos en commit:', archivos)
+  const org = process.env.AZURE_DEVOPS_ORG
+  const project = process.env.AZURE_DEVOPS_PROJECT
+  const pat = Buffer.from(`:${process.env.AZURE_DEVOPS_PAT}`).toString('base64')
+  const repoId = resource.repository.id
 
-    for (const archivo of archivos) {
-      console.log('Procesando archivo:', archivo)
-      await indexarArchivo(archivo, resource.repository.id)
+  for (const commit of commits) {
+    console.log('Procesando commit:', commit.commitId)
+
+    try {
+      // Obtener archivos del commit via API
+      const url = `https://dev.azure.com/${org}/${project}/_apis/git/repositories/${repoId}/commits/${commit.commitId}/changes?api-version=7.0`
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Basic ${pat}` }
+      })
+
+      const changes = response.data.changes || []
+      console.log('Cambios encontrados:', changes.length)
+
+      const archivos = changes
+        .filter(c => c.item?.gitObjectType === 'blob')
+        .map(c => c.item.path.replace(/^\//, ''))
+
+      console.log('Archivos a indexar:', archivos)
+
+      for (const archivo of archivos) {
+        await indexarArchivo(archivo, repoId)
+      }
+    } catch (error) {
+      console.error('Error obteniendo cambios:', error.message)
     }
   }
 }
