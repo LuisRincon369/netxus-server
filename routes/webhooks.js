@@ -90,29 +90,31 @@ async function indexarArchivo(rutaArchivo, repoId) {
   const contenido = await obtenerContenido(repoId, rutaArchivo)
   if (!contenido) return
 
+  // Limpiar contenido antes de procesar
+  const contenidoLimpio = contenido
+    .replace(/\p{Cc}/gu, ' ') // eliminar caracteres de control
+    .replace(/\\/g, '\\\\')   // duplicar backslashes
+    .trim()
+
   const huMatch = rutaArchivo.match(/hu-(\d+)/i)
   const hu_id = huMatch ? `HU-${huMatch[1]}` : null
 
-  const embedding = await generarEmbedding(contenido)
+  try {
+    const embedding = await generarEmbedding(contenidoLimpio)
 
-  const nodo = {
-    tipo,
-    titulo: rutaArchivo.split('/').pop().replace('.md', ''),
-    contenido,
-    hu_id,
-    embedding
+    const { error } = await supabase.from('nodos').insert({
+      tipo,
+      titulo: rutaArchivo.split('/').pop().replace('.md', ''),
+      contenido: contenidoLimpio,
+      hu_id,
+      embedding
+    })
+
+    if (error) throw new Error(error.message)
+    console.log(`✅ Indexado: ${rutaArchivo} → ${tipo}`)
+  } catch (err) {
+    console.error(`Error indexando ${rutaArchivo}:`, err.message)
   }
-
-  // Si tiene hu_id → upsert, si no → insert normal
-  const { error } = hu_id
-    ? await supabase.from('nodos').upsert(nodo, {
-        onConflict: 'hu_id,tipo',
-        ignoreDuplicates: false
-      })
-    : await supabase.from('nodos').insert(nodo)
-
-  if (error) throw new Error(error.message)
-  console.log(`✅ Indexado: ${rutaArchivo} → ${tipo}`)
 }
 
 function detectarTipo(ruta) {

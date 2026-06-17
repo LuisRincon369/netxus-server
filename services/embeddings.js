@@ -21,6 +21,7 @@ async function generarEmbedding(texto) {
     : JSON.stringify(texto)
 
   const textoLimpio = textoString
+    .replace(/\p{Cc}/gu, ' ') // eliminar caracteres de control (categoría Unicode Cc)
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 8000)
