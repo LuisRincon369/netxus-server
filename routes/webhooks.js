@@ -29,8 +29,8 @@ router.post('/azure', validarSecret, async (req, res) => {
       const repoNombre = resource.repository?.name
       console.log('Repo detectado:', repoNombre)
 
-      if (repoNombre === 'sdd-agentes') {
-        console.log('Procesando push a sdd-agentes...')
+      if (repoNombre === 'sdd-specs') {  // era sdd-agentes
+        console.log('Procesando push a sdd-specs...')
         await manejarPushSDD(resource)
       } else {
         console.log('Repo ignorado:', repoNombre)
